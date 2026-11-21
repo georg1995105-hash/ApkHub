@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">APK HUB</string>
+    <string name="notification_channel_updates_name">Обновления приложений</string>
+    <string name="notification_channel_updates_desc">Уведомления о новых релизах на GitHub</string>
+</resources>
