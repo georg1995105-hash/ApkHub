@@ -5,7 +5,7 @@ package com.apkhub.app.domain.logic
  * or checksum file contents (e.g., sha256sums.txt or app.apk.sha256).
  */
 object ChecksumExtractor {
-    private val sha256Regex = Regex("(?i)\b([a-f0-9]{64})\b")
+    private val sha256Regex = Regex("""(?i)\b([a-f0-9]{64})\b""")
 
     fun extractExpectedSha256(
         text: String?,
@@ -40,8 +40,7 @@ object ChecksumExtractor {
         // Pass 3: If the text is a dedicated single-hash checksum file (e.g., <asset>.sha256)
         val trimmed = text.trim()
         val allMatches = sha256Regex.findAll(trimmed).toList()
-        if (allMatches.size == 1 && trimmed.length <= 260 && !trimmed.contains("
-")) {
+        if (allMatches.size == 1 && trimmed.length <= 260 && !trimmed.contains("\n")) {
             return allMatches.first().groupValues[1].lowercase()
         }
 
