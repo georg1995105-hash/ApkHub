@@ -5,6 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
+import android.util.Log
+import com.apkhub.app.ApkHubApplication
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class InstallResultReceiver : BroadcastReceiver() {
 
@@ -24,27 +30,25 @@ class InstallResultReceiver : BroadcastReceiver() {
         when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 val confirmIntent = extractConfirmIntent(intent)
-                if (confirmIntent != null) {
+                if (confirmIntent == null) {
+                    persistResult(context, InstallResultEvent(
+                        taskId, appId, installedPkg, PackageInstaller.STATUS_FAILURE,
+                        "Android не предоставил окно подтверждения установки.", false, false
+                    ))
+                } else {
                     confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     try {
                         context.startActivity(confirmIntent)
                     } catch (e: Exception) {
-                        InstallEventBus.emit(
-                            InstallResultEvent(
-                                taskId = taskId,
-                                appId = appId,
-                                packageName = installedPkg,
-                                status = PackageInstaller.STATUS_FAILURE,
-                                statusMessage = "Не удалось открыть системное окно подтверждения установки: ${e.localizedMessage}",
-                                isSuccess = false,
-                                isCancelled = false
-                            )
-                        )
+                        persistResult(context, InstallResultEvent(
+                            taskId, appId, installedPkg, PackageInstaller.STATUS_FAILURE,
+                            "Не удалось открыть подтверждение установки: ${e.localizedMessage}", false, false
+                        ))
                     }
                 }
             }
             PackageInstaller.STATUS_SUCCESS -> {
-                InstallEventBus.emit(
+                persistResult(context, 
                     InstallResultEvent(
                         taskId = taskId,
                         appId = appId,
@@ -57,7 +61,7 @@ class InstallResultReceiver : BroadcastReceiver() {
                 )
             }
             PackageInstaller.STATUS_FAILURE_ABORTED -> {
-                InstallEventBus.emit(
+                persistResult(context, 
                     InstallResultEvent(
                         taskId = taskId,
                         appId = appId,
@@ -71,7 +75,7 @@ class InstallResultReceiver : BroadcastReceiver() {
             }
             else -> {
                 val readable = mapFailureMessage(status, rawMsg)
-                InstallEventBus.emit(
+                persistResult(context, 
                     InstallResultEvent(
                         taskId = taskId,
                         appId = appId,
@@ -82,6 +86,21 @@ class InstallResultReceiver : BroadcastReceiver() {
                         isCancelled = false
                     )
                 )
+            }
+        }
+    }
+
+    /** Persist the result even when Android starts a fresh app process for this broadcast. */
+    private fun persistResult(context: Context, event: InstallResultEvent) {
+        val pending = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                val app = context.applicationContext as ApkHubApplication
+                app.container.appRepository.handleInstallResultEvent(event)
+            } catch (e: Exception) {
+                Log.e("ApkHubInstaller", "Cannot persist installer result", e)
+            } finally {
+                pending.finish()
             }
         }
     }

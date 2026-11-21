@@ -623,6 +623,10 @@ class AppRepository(
     }
 
     suspend fun retryDownload(taskId: Long): Result<Long> {
+        if (apkDownloadManager.isDownloading(taskId)) {
+            return Result.failure(IllegalStateException("Предыдущая загрузка ещё выполняется."))
+        }
+        apkDownloadManager.resetForRetry(taskId)
         val task = downloadTaskDao.getById(taskId)
             ?: return Result.failure(IllegalStateException("Задача не найдена."))
         val token = settingsDataStore.getSettingsSnapshot().githubToken.takeIf { it.isNotBlank() }
@@ -755,6 +759,17 @@ class AppRepository(
 
         val currentTask = downloadTaskDao.getById(taskId) ?: return
         val now = System.currentTimeMillis()
+        if (apkDownloadManager.wasCancelled(taskId) || currentTask.status == DownloadStatus.CANCELLED.name) {
+            if (outcome is DownloadOutcome.Success) {
+                apkDownloadManager.deleteFileIfExists(outcome.file.absolutePath)
+            }
+            downloadTaskDao.update(currentTask.copy(
+                status = DownloadStatus.CANCELLED.name,
+                errorMessage = "Загрузка отменена пользователем.",
+                updatedAt = now
+            ))
+            return
+        }
 
         when (outcome) {
             is DownloadOutcome.Cancelled -> {
@@ -865,7 +880,17 @@ class AppRepository(
                             sha256 = outcome.sha256
                         )
 
-                        // Trigger Android PackageInstaller automatically if permission is granted
+                        // Cancellation can arrive during verification; never install a cancelled APK.
+                        if (apkDownloadManager.wasCancelled(taskId)) {
+                            apkDownloadManager.deleteFileIfExists(outcome.file.absolutePath)
+                            downloadTaskDao.update(readyTask.copy(
+                                status = DownloadStatus.CANCELLED.name,
+                                localFilePath = null,
+                                errorMessage = "Отменено пользователем.",
+                                updatedAt = System.currentTimeMillis()
+                            ))
+                            return
+                        }
                         if (packageInstallerController.canRequestPackageInstalls()) {
                             triggerInstallForReadyTask(taskId)
                         }

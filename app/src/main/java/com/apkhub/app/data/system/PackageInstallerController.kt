@@ -8,9 +8,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
@@ -24,15 +21,6 @@ data class InstallResultEvent(
     val isSuccess: Boolean,
     val isCancelled: Boolean
 )
-
-object InstallEventBus {
-    private val _events = MutableSharedFlow<InstallResultEvent>(extraBufferCapacity = 32)
-    val events: SharedFlow<InstallResultEvent> = _events.asSharedFlow()
-
-    fun emit(event: InstallResultEvent) {
-        _events.tryEmit(event)
-    }
-}
 
 sealed interface InstallTriggerResult {
     data class SessionCommitted(val sessionId: Int) : InstallTriggerResult

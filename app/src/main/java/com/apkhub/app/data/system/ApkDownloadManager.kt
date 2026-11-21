@@ -88,8 +88,17 @@ class ApkDownloadManager(
 
     fun cancelDownload(taskId: Long) {
         cancelledIds.add(taskId)
-        activeCalls.remove(taskId)?.cancel()
+        activeCalls[taskId]?.cancel()
         _progressMap.update { it - taskId }
+    }
+
+    fun wasCancelled(taskId: Long): Boolean = cancelledIds.contains(taskId)
+
+    fun isDownloading(taskId: Long): Boolean = activeCalls.containsKey(taskId)
+
+    fun resetForRetry(taskId: Long) {
+        require(!isDownloading(taskId)) { "Предыдущая загрузка ещё завершается." }
+        cancelledIds.remove(taskId)
     }
 
     suspend fun downloadApk(
@@ -99,7 +108,7 @@ class ApkDownloadManager(
         expectedSizeBytes: Long,
         token: String?
     ): DownloadOutcome = withContext(Dispatchers.IO) {
-        cancelledIds.remove(taskId)
+        if (cancelledIds.contains(taskId)) return@withContext DownloadOutcome.Cancelled
         val safeName = sanitizeFileName(targetFileName)
         val finalFile = File(getApkDirectory(), "${taskId}_$safeName")
         val partFile = File(getApkDirectory(), "${taskId}_$safeName.part")
@@ -116,7 +125,9 @@ class ApkDownloadManager(
         }
 
         val call = httpClient.newCall(reqBuilder.build())
-        activeCalls[taskId] = call
+        if (activeCalls.putIfAbsent(taskId, call) != null) {
+            return@withContext DownloadOutcome.Failure("Загрузка уже выполняется.")
+        }
 
         try {
             call.execute().use { response ->
@@ -210,8 +221,7 @@ class ApkDownloadManager(
                 "Ошибка при загрузке: ${e.localizedMessage ?: "неизвестная ошибка"}."
             )
         } finally {
-            activeCalls.remove(taskId)
-            cancelledIds.remove(taskId)
+            activeCalls.remove(taskId, call)
             _progressMap.update { it - taskId }
         }
     }

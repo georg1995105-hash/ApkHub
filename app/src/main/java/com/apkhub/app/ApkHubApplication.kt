@@ -1,7 +1,6 @@
 package com.apkhub.app
 
 import android.app.Application
-import com.apkhub.app.data.system.InstallEventBus
 import com.apkhub.app.data.system.PackageChangeReceiver
 import com.apkhub.app.di.AppContainer
 import kotlinx.coroutines.CoroutineScope
@@ -23,12 +22,8 @@ class ApkHubApplication : Application() {
         container = AppContainer(this)
         container.notificationHelper.ensureChannels()
 
-        // Observe system installer results globally so state updates even if UI is paused
-        appScope.launch {
-            InstallEventBus.events.collect { event ->
-                container.appRepository.handleInstallResultEvent(event)
-            }
-        }
+        // Installer broadcasts persist their result directly through goAsync().
+        // An in-memory SharedFlow would lose results after process recreation.
 
         // Sync WorkManager schedule with saved user settings
         appScope.launch {
