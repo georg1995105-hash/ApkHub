@@ -28,26 +28,27 @@
 
 ## Инструкция по сборке
 
-1. Распакуйте архив `apk-hub-android.zip`.
-2. Откройте каталог `apk-hub` в **Android Studio** (либо сгенерируйте бинарный wrapper командой `gradle wrapper --gradle-version 8.9` в корне проекта, если собираете из терминала без Android Studio).
+1. Клонируйте `https://github.com/georg1995105-hash/ApkHub.git` либо скачайте исходники через **Code → Download ZIP**.
+2. Откройте корень проекта в **Android Studio**. Для CLI без бинарного `gradle-wrapper.jar` установите Gradle 8.9 или создайте wrapper командой `gradle wrapper --gradle-version 8.9`.
 3. При необходимости укажите свой репозиторий для самообновления в `app/build.gradle.kts` (`SELF_UPDATE_REPO`).
 4. Выполните синхронизацию Gradle (`Sync Project with Gradle Files`).
 5. Запустите модульные тесты:
    ```bash
-   ./gradlew testDebugUnitTest
+   gradle testDebugUnitTest
    ```
 6. Соберите debug или release APK:
    ```bash
-   ./gradlew assembleDebug
-   ./gradlew assembleRelease
+   gradle assembleDebug
+   gradle assembleRelease
    ```
    Готовый APK появится в `app/build/outputs/apk/`.
 
 ## Что требует проверки в Android Studio и на реальном устройстве
 
-Поскольку проект подготовлен без доступа к Android SDK, компилятору Kotlin/Gradle и физическому устройству, следующему разработчику необходимо проверить:
-- Полную Gradle-синхронизацию, компиляцию KSP (Room) и Compose Compiler, а также прогон `./gradlew testDebugUnitTest`.
-- Работу `PackageInstaller.Session` и `InstallResultReceiver` на реальных устройствах с Android 8–15 (включая сценарии подтверждения пользователем, отмены, конфликта подписи и обновления самого APK HUB).
+22 ноября 2026 года в GitHub Actions успешно завершились `testDebugUnitTest`, `assembleDebug` и загрузка тестового APK: [Android CI run #44965023460](https://github.com/georg1995105-hash/ApkHub/actions/runs/44965023460). **Это подтверждает сборку и модульные тесты, но не испытания на устройстве.**
+
+Перед пользовательским релизом ещё требуется проверить:
+- Работу `PackageInstaller.Session` и `InstallResultReceiver` на реальных устройствах с Android 8–16 (включая сценарии подтверждения пользователем, отмены, конфликта подписи и обновления самого APK HUB).
 - Навигацию пультом (D-Pad) на эмуляторе или реальном Android TV.
 - Поведение `WorkManager` в Doze Mode и выдачу разрешения `POST_NOTIFICATIONS` на Android 13+.
 - Конфигурацию `signingConfigs` для production release-сборки (`keystore`).
@@ -55,7 +56,7 @@
 
 ## Integration and release gates
 
-The GitHub Actions workflow builds a **debug-only, test-only** APK. It does not
+The GitHub Actions workflow successfully built and uploaded a **debug-only, test-only** APK on 2026-11-22. It does not
 publish a release or claim device validation. It uses a Gradle 8.9 toolchain
 installation on the runner because the source archive has no `gradle-wrapper.jar`.
 
