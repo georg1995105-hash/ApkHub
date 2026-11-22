@@ -2,8 +2,10 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="apks/" />
+        <exclude domain="file" path="datastore/apkhub_settings.preferences_pb" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="apks/" />
+        <exclude domain="file" path="datastore/apkhub_settings.preferences_pb" />
     </device-transfer>
 </data-extraction-rules>

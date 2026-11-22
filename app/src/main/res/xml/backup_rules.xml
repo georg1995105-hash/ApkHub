@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <!-- APK downloads are transient, and DataStore contains a GitHub access token. -->
     <exclude domain="file" path="apks/" />
+    <exclude domain="file" path="datastore/apkhub_settings.preferences_pb" />
     <exclude domain="sharedpref" path="." />
 </full-backup-content>
