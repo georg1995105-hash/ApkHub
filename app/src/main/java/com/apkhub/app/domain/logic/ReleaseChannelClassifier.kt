@@ -4,12 +4,12 @@ import com.apkhub.app.domain.model.ReleaseChannel
 
 object ReleaseChannelClassifier {
     private val testPatterns = listOf(
-        Regex("""(?i)(^|[._\-\s+])(alpha|a\d+|nightly|canary|dev|snapshot|test|testing|experimental|debug|wip|preview|ci)([._\-\s+\d]|$)"""),
+        Regex("""(?i)(^|[._\-\s+])(alpha|a\d+|nightly|canary|dev|snapshot|test|testing|experimental|debug|wip|ci)([._\-\s+\d]|$)"""),
         Regex("""(?i)-a\.?\d+""")
     )
 
     private val betaPatterns = listOf(
-        Regex("""(?i)(^|[._\-\s+])(beta|b\d+|rc\d*|release[-_]?candidate|pre|prerelease|pre[-_]?release)([._\-\s+\d]|$)"""),
+        Regex("""(?i)(^|[._\-\s+])(beta|b\d+|rc\d*|release[-_]?candidate|preview|pre|prerelease|pre[-_]?release)([._\-\s+\d]|$)"""),
         Regex("""(?i)-b\.?\d+""")
     )
 
