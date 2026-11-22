@@ -108,6 +108,7 @@ fun AppsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (apps.isNotEmpty()) {
                 Button(onClick = onAddRepo) {
                     Icon(
                         imageVector = Icons.Rounded.Add,
@@ -117,9 +118,11 @@ fun AppsScreen(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Добавить")
                 }
+                }
             }
         }
 
+        if (apps.isNotEmpty()) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             OutlinedTextField(
                 value = searchQuery,
@@ -151,20 +154,22 @@ fun AppsScreen(
             }
         }
 
+        }
+
         if (filteredApps.isEmpty()) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 EmptyStateCard(
                     icon = Icons.Rounded.Apps,
                     title = if (apps.isEmpty()) "Каталог пуст" else "Ничего не найдено",
                     message = if (apps.isEmpty()) {
-                        "Добавьте ссылку на публичный GitHub-репозиторий с Android-релизами."
+                        "Добавьте GitHub-репозиторий с опубликованными APK в Releases. Здесь появятся доступные версии и обновления."
                     } else {
                         "Измените фильтр или поисковый запрос."
                     },
                     action = if (apps.isEmpty()) {
                         {
                             Button(onClick = onAddRepo) {
-                                Text("Добавить GitHub-ссылку")
+                                Text("Добавить приложение")
                             }
                         }
                     } else {

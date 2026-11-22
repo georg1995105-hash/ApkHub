@@ -158,6 +158,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
+                        if (apps.isNotEmpty()) {
                         Text(
                             text = "Отслеживается: ${apps.size} • Установлено: $installedCount",
                             style = MaterialTheme.typography.bodySmall,
@@ -168,6 +169,13 @@ fun HomeScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        } else {
+                            Text(
+                                text = "Добавьте GitHub-репозиторий с APK для отслеживания обновлений.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     if (updatesAvailable.isNotEmpty()) {
                         StatusPill(
@@ -184,9 +192,10 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    if (apps.isNotEmpty()) {
                     Button(
                         onClick = onCheckAll,
-                        enabled = !isCheckingAll && apps.isNotEmpty()
+                        enabled = !isCheckingAll
                     ) {
                         if (isCheckingAll) {
                             CircularProgressIndicator(
@@ -203,6 +212,7 @@ fun HomeScreen(
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(if (isCheckingAll) "Проверка..." else "Проверить все")
+                    }
                     }
 
                     if (updatesAvailable.isNotEmpty()) {
@@ -233,15 +243,15 @@ fun HomeScreen(
             }
         }
 
-        // Available Updates list
-        item {
+        // Do not show a second onboarding card before the first repository.
+        if (apps.isNotEmpty()) item {
             SectionHeader(
                 title = "Доступные обновления",
                 subtitle = if (updatesAvailable.isEmpty()) "Новые релизы появятся здесь" else null
             )
         }
 
-        if (updatesAvailable.isEmpty()) {
+        if (apps.isNotEmpty() && updatesAvailable.isEmpty()) {
             item {
                 EmptyStateCard(
                     icon = Icons.Rounded.CheckCircle,
@@ -262,7 +272,7 @@ fun HomeScreen(
                     }
                 )
             }
-        } else {
+        } else if (updatesAvailable.isNotEmpty()) {
             items(updatesAvailable, key = { it.id }) { app ->
                 val iconDrawable = remember(app.packageName) {
                     app.packageName?.let(loadIcon)
